@@ -1,0 +1,1 @@
+For the 1hlo_Maerki dataset, we need to pretend the decoy has C[HZEDGBA] as well, because we will use the decoys to evaluate the phis for the 1hlo_Maerki sequences;
