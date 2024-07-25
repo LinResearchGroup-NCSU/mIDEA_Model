@@ -12,6 +12,7 @@ import random
 
 # For Biopython
 from Bio.PDB import *
+from Bio.PDB.Atom import Atom
 #from Bio.PDB.Polypeptide import protein_letters_1to3, protein_letters_3to1
 # For converting three-letter codes to one-letter codes
 from Bio.Data.IUPACData import protein_letters_3to1
@@ -32,6 +33,9 @@ for three_letter, one_letter in protein_letters_3to1.items():
 
 
 phis_directory = "./phis/"
+tms_directory = "./tms/"
+jackhmmer_phis_directory = "./jackhmmer_phis/"
+gammas_directory = "./gammas/"
 
 res_type_map = {
     'A': 0,
@@ -108,16 +112,22 @@ def get_res_list(structure, tm_only=False):
     pdb_id = structure.get_id().split('/')[-1]
     res_list = Selection.unfold_entities(structure, 'R')
 
-    # Get all residues from a structure
     res_list = [residue for residue in res_list if not is_hetero(residue)]
 
     if tm_only:
-        tm = read_column_from_file(os.path.join(
-            tms_directory, pdb_id + '.tm'), 1)
-        res_list = [residue for i, residue in enumerate(
-            res_list) if tm[i] == '2']
+        tm = read_column_from_file(os.path.join(tms_directory, pdb_id + '.tm'), 1)
+        
+        with open('debug_info.txt', 'w') as debug_file:
+            debug_file.write(f"pdb_id: {pdb_id}\n")
+            debug_file.write(f"tm: {tm}\n")
+            debug_file.write(f"res_list length: {len(res_list)}\n")
+            for i, residue in enumerate(res_list):
+                debug_file.write(f"Residue {i}: {residue}\n")
+
+        res_list = [residue for i, residue in enumerate(res_list) if tm[i] == '2']
 
     return res_list
+
 
 
 def parse_pdb(pdb_id):

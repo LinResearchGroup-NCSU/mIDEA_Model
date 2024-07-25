@@ -36,6 +36,19 @@ def RepresentsFloat(s):
         return True
     except ValueError:
         return False
+    
+def shuffle_string(string):
+    string_list = list(string)
+    random.shuffle(string_list)
+    return ''.join(string_list)
+
+def cyclically_permute_string(string, degree):
+    return string[degree:] + string[:degree]
+
+def get_sublist(lst, indices):
+    return [lst[i] for i in indices]
+
+
 ###########################################
 
 
@@ -43,6 +56,7 @@ def generate_decoy_sequences(proteins_list_file_name, methods=['DNA_randomizatio
     protein_list = read_column_from_file(proteins_list_file_name, 1)
     
     decoys_root_directory = "./"
+
     
     os.chdir(decoys_root_directory)
     for i, method in enumerate(methods):
@@ -67,6 +81,7 @@ def generate_decoy_sequences(proteins_list_file_name, methods=['DNA_randomizatio
 def generate_decoy_sequence(protein, method='DNA_randomization', degree=None):
 
     sequences_root_directory = "../"
+    tm_root_directory = "../tms/"
 
     with open("%s%s.seq" % (sequences_root_directory + method + '/', protein), "r") as sequence_file:
         native_sequence = sequence_file.read().replace('\n', '')
@@ -153,4 +168,4 @@ def generate_decoy_sequence(protein, method='DNA_randomization', degree=None):
 ############################################
 
 
-generate_decoy_sequences("proteins_list.txt", methods=['prot_randomization'], num_decoys=[10000], randomSeed=0)
+generate_decoy_sequences("proteins_list.txt", methods=['prot_randomization'], num_decoys=[1000], randomSeed=0)

@@ -38,6 +38,18 @@ def RepresentsFloat(s):
     except ValueError:
         return False
 ###########################################
+import random
+
+def shuffle_string(string):
+    string_list = list(string)
+    random.shuffle(string_list)
+    return ''.join(string_list)
+
+def cyclically_permute_string(string, degree):
+    return string[degree:] + string[:degree]
+
+def get_sublist(lst, indices):
+    return [lst[i] for i in indices]
 
 
 def generate_decoy_sequences(proteins_list_file_name, methods=['DNA_randomization'], num_decoys=[1000], randomSeed=None):
@@ -68,6 +80,7 @@ def generate_decoy_sequences(proteins_list_file_name, methods=['DNA_randomizatio
 def generate_decoy_sequence(protein, method='DNA_randomization', degree=None):
 
     sequences_root_directory = "../"
+    tm_root_directory = "../tms/"
 
     with open("%s%s.seq" % (sequences_root_directory + method + '/', protein), "r") as sequence_file:
         native_sequence = sequence_file.read().replace('\n', '')

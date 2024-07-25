@@ -37,7 +37,7 @@ cp randomize_position_DNA.txt native.seq gBinder_sequences.txt DNA_randomization
 
 python generate_decoy_seq_DNA.py
 
-## Generate decoys for the protein
+# ## Generate decoys for the protein
 rm -r prot_randomization
 mkdir -p prot_randomization 
 #
@@ -57,7 +57,7 @@ grep "CA\|O5'" native_structures_pdbs_with_virtual_cbs/native.pdb > tmp.txt
 # Get the total number of residues;
 
 tot_resnum=`cat tmp.txt | awk 'END{print $6}'`
-python create_tms.py sequences/DNA_randomization/randomize_position_DNA.txt $tot_resnum
+python create_tms.py sequences/DNA_randomization/randomize_position_DNA.txt $tot_resnum $PDBid
 
 sed "s/CPLEX_NAME/$PDBid/g; s/PROT_CHAIN/$protChain/g" template_evaluate_phi.py > evaluate_phi.py
 python evaluate_phi.py
