@@ -61,7 +61,8 @@ res_type_map = {
     'DA': 20,
     'DG': 21,
     'DC': 22,
-    'DT': 23
+    'DT': 23,
+    '5CM': 24
 }
 
 
@@ -69,7 +70,8 @@ res_name_map = {
     'e': ' DA',
     'l': ' DG',
     'j': ' DC',
-    't': ' DT'
+    't': ' DT', 
+    '.': '5CM'
 }
 
 
@@ -249,7 +251,7 @@ def get_neighbors_within_radius(neighbor_list, residue, radius):
 
 def get_interaction_atom(residue):
     try:
-        if (residue.resname.strip() == "DA") or (residue.resname.strip() == "DT") or (residue.resname.strip() == "DC") or (residue.resname.strip() == "DG"):
+        if (residue.resname.strip() == "DA") or (residue.resname.strip() == "DT") or (residue.resname.strip() == "DC") or (residue.resname.strip() == "DG") or (residue.resname.strip() == "5CM"):
            # print(residue)
             try:
                 residue["C5"]
@@ -289,13 +291,13 @@ def mutate_whole_sequence(res_list, new_sequence):
         if new_sequence[i] in ['A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y']:
             res_list[i].resname = protein_letters_1to3[new_sequence[i]]
         # If it is a DNA sequence:
-        else:
+        elif new_sequence[i] in ['e', 'l', 'j', 't', '.']:
             res_list[i].resname = res_name_map[new_sequence[i]]
     return res_list
 
 def get_res_type(res_list, residue):
     # If it is DNA:
-    if (residue.get_resname().strip() == "DA") or (residue.get_resname().strip() == "DT") or (residue.get_resname().strip() == "DC") or (residue.get_resname().strip() == "DG"):
+    if (residue.get_resname().strip() == "DA") or (residue.get_resname().strip() == "DT") or (residue.get_resname().strip() == "DC") or (residue.get_resname().strip() == "DG") or (residue.get_resname().strip() == "5CM"):
        # print(residue)
         return res_type_map[residue.get_resname().strip()]
     # If it is protein:

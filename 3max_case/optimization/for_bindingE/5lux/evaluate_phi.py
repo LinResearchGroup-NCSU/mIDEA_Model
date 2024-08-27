@@ -13,7 +13,7 @@ import sys
 import numpy as np
 
 
-sys.path.append('/nobackup1/xclin/home/xclin/eofeJob/tcr/optimization/awsem/HLA0201_singleMatrix')
+sys.path.append('../../../common_functions')
 from common_function import *
 
 ################################################
@@ -40,35 +40,32 @@ def RepresentsFloat(s):
 ###########################################
 
 
-def phi_pairwise_contact_well(res_list_tmonly, res_list_entire, neighbor_list, parameter_list, TCRmodeling=False, TCR_name='IDK'):
+def phi_pairwise_contact_well(res_list_tmonly, res_list_entire, neighbor_list, parameter_list, CPLEXmodeling=False, CPLEX_name='IDK'):
 
     r_min, r_max, kappa, min_seq_sep = parameter_list
     r_min = float(r_min)
     r_max = float(r_max)
     kappa = float(kappa)
     min_seq_sep = int(min_seq_sep)
-    phi_pairwise_contact_well = np.zeros((20, 20))
+    phi_pairwise_contact_well = np.zeros((24, 24))
     for res1globalindex, res1 in enumerate(res_list_entire):
 
         res1index = get_local_index(res1)
         res1chain = get_chain(res1)
 
-        # For TCR modeling, we only need the sequence in the peptide;
-        if TCRmodeling:
-
-
+        # For CPLEX modeling, we only need the sequence in the DNA;
+        if CPLEXmodeling:
             if (res1 in res_list_tmonly):
                 for res2 in get_neighbors_within_radius(neighbor_list, res1, r_max + 2.0):
                     res2index = get_local_index(res2)
                     res2chain = get_chain(res2)
                     res2globalindex = get_global_index(res_list_entire, res2)
-                    # Here, we strictly consider only between the peptide and the TCR (chain C & D):
-                    # Res1 through tm_only, is already in chain E, we only need to control the res2 to
-                    # be in chian C or D;
-                    # The chain ID varies from one TCR to the other, be careful!!!
-                    # 2B4: chain C or D; 5CC7: chain D or E; 226: chain C or D;
-                    if (TCR_name == '1ao7'):                       
-                        if (res2chain == 'D' or res2chain == 'E'):
+                    # Here, we strictly consider only between the DNA chain and the protein chain:
+                    # Res1 through tm_only, is already in the DNA chain, we only need to control the res2 to
+                    # be in the protein chain;
+                    # The chain ID varies from one Complex to the other, be careful!!!
+                    if (CPLEX_name == '5lux'):                       
+                        if (res2chain == 'B'):
                             res1type = get_res_type(res_list_entire, res1)
                             res2type = get_res_type(res_list_entire, res2)
                             rij = get_interaction_distance(res1, res2)
@@ -82,7 +79,7 @@ def phi_pairwise_contact_well(res_list_tmonly, res_list_entire, neighbor_list, p
                 continue
 
         else:
-
+            # This is only for the AWSEM protein treatment, not related here;
             for res2 in get_neighbors_within_radius(neighbor_list, res1, r_max + 2.0):
                 res2index = get_local_index(res2)
                 res2chain = get_chain(res2)
@@ -98,24 +95,24 @@ def phi_pairwise_contact_well(res_list_tmonly, res_list_entire, neighbor_list, p
                             rij, r_min, r_max, kappa)
 
     phis_to_return = []
-    for i in range(20):
-        for j in range(i, 20):
+    for i in range(24):
+        for j in range(i, 24):
             phis_to_return.append(phi_pairwise_contact_well[i][j])
 
     return phis_to_return
 
 
-def evaluate_phis_over_training_set(training_set_file, phi_list_file_name, decoy_method, max_decoys, tm_only=False, num_processors=1, TCRmodeling=False, TCR_name='IDK'):
+def evaluate_phis_over_training_set(training_set_file, phi_list_file_name, decoy_method, max_decoys, tm_only=False, num_processors=1, CPLEXmodeling=False, CPLEX_name='IDK'):
     phi_list = read_phi_list(phi_list_file_name)
     print(phi_list)
     training_set = read_column_from_file(training_set_file, 1)
     print(training_set)
 
     # for protein in training_set:
-    evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, tm_only=tm_only, TCRmodeling=TCRmodeling, TCR_name=TCR_name)
+    evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, tm_only=tm_only, CPLEXmodeling=CPLEXmodeling, CPLEX_name=CPLEX_name)
 
 
-def evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, tm_only=False, TCRmodeling=False, TCR_name='IDK'):
+def evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, tm_only=False, CPLEXmodeling=False, CPLEX_name='IDK'):
     # Because there is only one protein in the training set; if there are multiple proteins, the script could be different!
     protein = training_set[0]
 
@@ -146,7 +143,7 @@ def evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, 
         output_file = open(os.path.join(phis_directory, "%s_%s_native_%s" % (
             phi.__name__, protein, parameters_string)), 'w')
         phis_to_write = phi(res_list_tmonly_native, res_list_entire_native,
-                            neighbor_list, parameters, TCRmodeling=TCRmodeling, TCR_name=TCR_name)
+                            neighbor_list, parameters, CPLEXmodeling=CPLEXmodeling, CPLEX_name=CPLEX_name)
         output_file.write(str(phis_to_write).strip(
             '[]').replace(',', '') + '\n')
         output_file.close()
@@ -164,7 +161,7 @@ def evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, 
             # Note after this mutation, both res_list_entire and res_list_tmonly have been changed accordingly, because this is a change by reference;
 
             phis_to_write = phi(res_list_tmonly, res_list_entire,
-                                neighbor_list, parameters, TCRmodeling=TCRmodeling, TCR_name=TCR_name)
+                                neighbor_list, parameters, CPLEXmodeling=CPLEXmodeling, CPLEX_name=CPLEX_name)
             output_file.write(str(phis_to_write).strip(
                 '[]').replace(',', ' ') + '\n')
         output_file.close()
@@ -176,5 +173,5 @@ native_structures_directory = "./native_structures_pdbs_with_virtual_cbs/"
 phis_directory = "./phis/"
 decoys_root_directory = "./sequences/"
 
-evaluate_phis_over_training_set("proteins_list.txt", "phi1_list.txt", decoy_method='TCR_randomization', 
-                                max_decoys=1000, tm_only=False, num_processors=1, TCRmodeling=True, TCR_name='1ao7')
+evaluate_phis_over_training_set("proteins_list.txt", "phi1_list.txt", decoy_method='CPLEX_randomization', 
+                                max_decoys=100000, tm_only=False, num_processors=1, CPLEXmodeling=True, CPLEX_name='5lux')
