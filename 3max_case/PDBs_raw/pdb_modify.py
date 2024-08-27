@@ -31,6 +31,9 @@ def remove_ter_and_renumber_atoms(pdb_id):
             line = 'ATOM  ' + line[6:]  # Change HETATM to ATOM if necessary
             line = line[:6] + serial_number + line[11:]
             
+            # Assign chain ID 'A' for all protein residues
+            line = line[:21] + 'A' + line[22:]
+
             # Check if the residue number has changed
             residue_number = line[22:26].strip()
             if residue_number != current_residue_number:
@@ -50,6 +53,9 @@ def remove_ter_and_renumber_atoms(pdb_id):
             line = 'ATOM  ' + line[6:]  # Change HETATM to ATOM if necessary
             line = line[:6] + serial_number + line[11:]
             
+            # Assign chain ID 'B' for all DNA residues
+            line = line[:21] + 'B' + line[22:]
+
             # Check if the residue number has changed
             residue_number = line[22:26].strip()
             if residue_number != current_residue_number:

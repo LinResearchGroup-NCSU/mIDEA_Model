@@ -53,6 +53,8 @@ def phi_pairwise_contact_well(res_list_tmonly, res_list_entire, neighbor_list, p
         res1index = get_local_index(res1)
         res1chain = get_chain(res1)
 
+        # print("res1index: " + str(res1index))
+        # print("res1chain: " + str(res1chain))
         # For CPLEX modeling, we only need the sequence in the DNA;
         if CPLEXmodeling:
             if (res1 in res_list_tmonly):
@@ -122,6 +124,16 @@ def evaluate_phis_for_protein(training_set, phi_list, decoy_method, max_decoys, 
     # Two lists of res_list, one for the peptide (selected by the .tm file), one for the entire list
     res_list_tmonly = get_res_list(structure, tm_only=True)
     res_list_entire = get_res_list(structure, tm_only=False)
+
+    with open('./phis/res_list_tmonly.txt', 'w') as f:
+        for residue in res_list_tmonly:
+            f.write(f"{residue}\n") 
+
+
+    with open('./phis/res_list_entire.txt', 'w') as f:
+        for residue in res_list_entire:
+            f.write(f"{residue}\n") 
+
     # Here, we are going to take every residues close to the pMHC peptide, so there is no restriction (tm_only) on what is going to be taken;
     neighbor_list = get_neighbor_list(structure, tm_only=False)
 
