@@ -13,6 +13,11 @@ params=$(grep -v "^#" phi1_list.txt | grep "phi_pairwise_contact_well" | awk '{p
 # 输出params的值
 echo "Extracted params: $params"
 
+# remove the old data before
+rm -r native_structures_pdbs_with_virtual_cbs/*
+rm -r phis/*
+rm -r tms/*
+
 while read f
 do
     echo $f

@@ -13,20 +13,25 @@ params=$(grep -v "^#" phi1_list.txt | grep "phi_pairwise_contact_well" | awk '{p
 
 echo "Extracted params: $params"
 
+# remove the old data before
+rm -r native_structures_pdbs_with_virtual_cbs/*
+rm -r phis/*
+rm -r tms/*
+
 while read f
 do
     echo $f
-    echo "Copying ../for_bindingE/$f/native_structures_pdbs_with_virtual_cbs/native.pdb to native_structures_pdbs_with_virtual_cbs/${f}.pdb"
+    # echo "Copying ../for_bindingE/$f/native_structures_pdbs_with_virtual_cbs/native.pdb to native_structures_pdbs_with_virtual_cbs/${f}.pdb"
     cp ../for_bindingE/$f/native_structures_pdbs_with_virtual_cbs/native.pdb native_structures_pdbs_with_virtual_cbs/${f}.pdb
 
-    echo "Copying ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_native_${params} to phis/phi_pairwise_contact_well_${f}_native_${params}"
+    # echo "Copying ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_native_${params} to phis/phi_pairwise_contact_well_${f}_native_${params}"
     cp ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_native_${params} phis/phi_pairwise_contact_well_${f}_native_${params}
     
-    echo "Copying ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_decoys_CPLEX_randomization_${params} to phis/phi_pairwise_contact_well_${f}_decoys_CPLEX_randomization_${params}"
+    # echo "Copying ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_decoys_CPLEX_randomization_${params} to phis/phi_pairwise_contact_well_${f}_decoys_CPLEX_randomization_${params}"
     cp ../for_bindingE/$f/phis/phi_pairwise_contact_well_native_decoys_CPLEX_randomization_${params} phis/phi_pairwise_contact_well_${f}_decoys_CPLEX_randomization_${params}
     
     # echo "Copying ../for_bindingE/$f/tms/${f}.tm to tms/${f}.tm"
-    # cp ../for_bindingE/$f/tms/${f}.tm tms/${f}.tm
+    cp ../for_bindingE/$f/tms/${f}.tm tms/${f}.tm
 done < native_trainSetFiles.txt
 
 
