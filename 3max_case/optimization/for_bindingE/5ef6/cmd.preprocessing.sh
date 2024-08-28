@@ -19,15 +19,19 @@ cp native_structures_pdbs_with_virtual_cbs/native.pdb sequences/
 cd sequences/
 
 # Build the sequence for native.pdb
+echo "building"
 python buildseq.py native
+echo "building"
 bash cmd.cleanSequences.sh native.seq 
 
 bash for_gBinder_sequences.sh
 
 # Find the indices of contacting protein-DNA residues
 # Cutoff for determining contacting residues, unit: nm
+echo "Cutoff for determining contacting residues"
 export cutoff=1.2
 python find_cm_residues.py native.pdb $cutoff randomize_position_prot.txt randomize_position_DNA.txt
+echo "Cutoff for determining contacting residues"
 
 # Generate decoys for the DNA
 rm -r DNA_randomization

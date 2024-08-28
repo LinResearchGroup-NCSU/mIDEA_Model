@@ -39,7 +39,7 @@ def find_cm_residues(pdbfile, cutoff, random_position_file_protein, random_posit
  #   print(pdb_table)
 
     # Select residue indices belonging to DNA
-    DNA_resID = pdb_table.loc[(pdb_table['resName'] == 'DA') |  (pdb_table['resName'] == 'DC') | (pdb_table['resName'] == 'DT') | (pdb_table['resName'] == 'DG')].drop_duplicates(subset=['resSeq']).resSeq.to_numpy()
+    DNA_resID = pdb_table.loc[(pdb_table['resName'] == 'DA') |  (pdb_table['resName'] == 'DC') | (pdb_table['resName'] == 'DT') | (pdb_table['resName'] == 'DG') | (pdb_table['resName'] == '5CM')].drop_duplicates(subset=['resSeq']).resSeq.to_numpy()
     # Select residue indices belonging to protein
     prot_resID = pdb_table.loc[(pdb_table['resName'] == 'ALA') |  (pdb_table['resName'] == 'ARG') | (pdb_table['resName'] == 'ASN') \
          | (pdb_table['resName'] == 'ASP') | (pdb_table['resName'] == 'CYS') | (pdb_table['resName'] == 'GLU') \
@@ -53,17 +53,23 @@ def find_cm_residues(pdbfile, cutoff, random_position_file_protein, random_posit
     prot_resID_0_indexed = prot_resID - 1
 
     # Select the atom indices belong to DNA
-    DNA_atom_indices = pdb.topology.select("resname =~ 'D[ATCG]'")
+    # DNA_atom_indices = pdb.topology.select("(resname =~ 'DA' or resname =~ 'DT' or resname =~ 'DG' or resname =~ 'DC' or resname == '5CM')")
     # Select the atom indices belong to protein
-    prot_atom_indices = pdb.topology.select("is_protein == True")
+    # prot_atom_indices = pdb.topology.select("is_protein == True")
 
     # Use mdtraj to calculate the contacts
     prot_DNA_respairs = list(itertools.product(DNA_resID_0_indexed, prot_resID_0_indexed))
  #   print(prot_DNA_respairs)
     prot_DNA_respair_distances, residue_pairs = md.compute_contacts(pdb, prot_DNA_respairs, scheme='closest-heavy')
 
-  #  print(prot_DNA_respair_distances)
-  #  print(residue_pairs)
+    prot_DNA_respair_distances = prot_DNA_respair_distances.flatten()
+
+    combined_data = np.column_stack((residue_pairs, prot_DNA_respair_distances))
+
+
+    np.savetxt("combined_residue_pairs_distances.txt", combined_data, fmt='%d %d %.6f')
+
+
 
     # Select those pairs that are closer than the cutoff
     prot_DNA_respair_distances = prot_DNA_respair_distances.flatten()

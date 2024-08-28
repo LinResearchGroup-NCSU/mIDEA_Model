@@ -6,5 +6,5 @@
 #########################################################################
 #!/bin/bash
 
-bash cmd.preprocessing.sh 5lux B
+bash cmd.preprocessing.sh 5lux A
 

@@ -132,6 +132,9 @@ def calculate_A_B_and_gamma_xl23(training_set_file, phi_list_file_name, decoy_me
     # Find out how many total phi_i there are and get full parameter string
     total_phis, full_parameters_string, num_phis = get_total_phis_and_parameter_string(
         phi_list, training_set)
+    print("training set: " + str(training_set))
+    print("total_phis: " + str(total_phis))
+    print("num_phis: " + str(num_phis))
 
     phi_native_i_protein = np.zeros((len(training_set), total_phis))
     for i_protein, protein in enumerate(training_set):
@@ -228,4 +231,4 @@ def calculate_A_B_and_gamma_xl23(training_set_file, phi_list_file_name, decoy_me
 gammas_directory = "./gammas/randomized_decoy/"
 
 calculate_A_B_and_gamma_xl23("native_trainSetFiles.txt", "phi1_list.txt", decoy_method='CPLEX_randomization', 
-                             num_decoys=1000, noise_filtering=True, jackhmmer=False)
+                             num_decoys=10000, noise_filtering=True, jackhmmer=False)

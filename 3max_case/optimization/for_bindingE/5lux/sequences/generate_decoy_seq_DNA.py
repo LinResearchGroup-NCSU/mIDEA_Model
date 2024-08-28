@@ -127,7 +127,7 @@ def generate_decoy_sequence(protein, method='DNA_randomization', degree=None):
             "randomize_position_DNA.txt", 'r').readline().split(' ')
         for resid_toberandomized in resids_toberandomized:
             # Residue to be randomly mutated to (randomly selected from 4 nucleotides);
-            resAbbr = random.choice(list(["e", "l", "j", "t"]))
+            resAbbr = random.choice(list(["e", "l", "j", "t", "."]))
 
             # Replace the corresponding nucleotide with 4 possibilities;
             sequence_toberandomized[int(resid_toberandomized) - 1] = resAbbr

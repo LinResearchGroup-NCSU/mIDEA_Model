@@ -26,7 +26,7 @@ def create_tms(random_position_file, tot_resnum, PDBid):
 
     random_position = lines[0].split(" ")
     random_position_int = [int(integer) for integer in random_position]
-    print(random_position_int)
+    # print(random_position_int)
 
     tms_content = []
 
@@ -48,7 +48,9 @@ if __name__ == "__main__":
     random_position_file = sys.argv[1]
     tot_resnum = int(sys.argv[2])
     PDBid = sys.argv[3]
+    print("tot_resnum: " + str(tot_resnum))
 
     create_tms(random_position_file, tot_resnum, PDBid)
-    print("When the voice of the Silent touches my words,")
-    print("I know him and therefore know myself.")
+    print("create_tms.py finished")
+    # print("When the voice of the Silent touches my words,")
+    # print("I know him and therefore know myself.")
