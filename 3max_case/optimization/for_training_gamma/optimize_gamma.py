@@ -56,7 +56,7 @@ def get_filtered_B_inv_lambda_and_P(filtered_lamb, cutoff_mode, P, method='exten
 
     return filtered_B_inv, filtered_lamb, P
 
-def get_filtered_gamma_B_lamb_P_and_lamb(A, B, half_B, other_half_B, std_half_B, total_phis, num_decoys, noise_iterations=10, relative_error_threshold=0.05):
+def get_filtered_gamma_B_lamb_P_and_lamb(A, B, half_B, other_half_B, std_half_B, total_phis, num_decoys, noise_iterations=10, relative_error_threshold=0.5):
     lamb, P = np.linalg.eig(B)
     lamb, P = sort_eigenvalues_and_eigenvectors(lamb, P)
 
@@ -73,6 +73,7 @@ def get_filtered_gamma_B_lamb_P_and_lamb(A, B, half_B, other_half_B, std_half_B,
         noisy_lamb, noisy_P = np.linalg.eig(noisy_B)
         noisy_lamb, noisy_P = sort_eigenvalues_and_eigenvectors(
             noisy_lamb, noisy_P)
+        # print("np.abs(lamb - noisy_lamb) / lamb: " + str(np.abs(lamb - noisy_lamb) / lamb) )
         
         try:
             cutoff_mode = np.where(np.abs(lamb - noisy_lamb) / lamb > relative_error_threshold)[0][0]
