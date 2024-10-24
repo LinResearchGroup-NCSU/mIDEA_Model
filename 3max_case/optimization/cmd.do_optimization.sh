@@ -23,8 +23,12 @@ cd ../../
 # Do the training;
 echo "cmd.training.sh"
 bash cmd.training.sh
-echo ""cmd.training.sh finished
+echo "cmd.training.sh finished"
 
 # Delete the target folder for saving space, only delete after training is complete
 # bash cmd.delete.sh
+
+echo "visualize.sh"
+bash cmd.visualize.sh
+echo "visualize.sh finished"
 cd ../

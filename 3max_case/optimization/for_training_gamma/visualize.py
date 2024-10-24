@@ -3,6 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import matplotlib
 
 sys.path.append('../../common_functions')
 from common_function import *
@@ -236,7 +237,9 @@ def plot_protDNA_phi_pairwise_contact_well(gammas, invert_sign=True, fix_colorba
 
     # plt.savefig('./plots/direct_contact.pdf')
     if save_path:
-        plt.savefig(os.path.join(save_path, f"{save_prefix}_gamma_plot.png"))
+        # plt.savefig(os.path.join(save_path, f"{save_prefix}_gamma_plot.png"))
+        matplotlib.rcParams['pdf.fonttype'] = 42
+        plt.savefig(os.path.join(save_path, f"{save_prefix}_gamma_plot.pdf"))
     # plt.show()
     
 res_type_map_letters = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G',
