@@ -1,3 +1,0 @@
-1hlo_modified_manual.pdb was modified manually from 1hlo_modified.pdb by combining chain C and D into chain C and remove the TER in between
-Effectively, it makes a dimer protein into a monomer
-This is the requirement from the later optimization code
