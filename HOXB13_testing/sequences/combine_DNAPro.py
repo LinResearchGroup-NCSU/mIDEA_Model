@@ -1,23 +1,28 @@
-def replace_and_generate_file(native_file, modeller_file, output_file):
+import re
+
+def clean_and_combine(native_file, modeller_file, output_file):
+    # Step 1: Read and clean the native sequence
     with open(native_file, 'r') as f:
         native_content = f.readline().strip()
 
-    import re
-    lowercase_match = re.search(r'[a-z]+', native_content)
-    if not lowercase_match:
-        print("No lowercase sequence found in native.seq!")
-        return
-    lowercase_sequence = lowercase_match.group(0)
+    # Remove all non-uppercase characters (keep only A-Z)
+    cleaned_native_content = re.sub(r'[^A-Z]', '', native_content)
 
+    # Step 2: Read the modeller file line by line
     with open(modeller_file, 'r') as f:
         modeller_lines = f.readlines()
 
+    # Step 3: Combine cleaned native sequence with each modeller line
+    output_lines = [
+        cleaned_native_content + line.strip() 
+        for line in modeller_lines 
+        if line.strip()  # Skip empty or whitespace-only lines
+    ]
+
+    # Step 4: Write the output to the output file
     with open(output_file, 'w') as out_f:
-        for modeller_line in modeller_lines:
-            modeller_line = modeller_line.strip()
-            new_content = native_content.replace(lowercase_sequence, modeller_line)
-            out_f.write(new_content + "\n")
+        out_f.write('\n'.join(output_lines) + '\n')  # Ensure a newline at the end of the file
 
-
-replace_and_generate_file("native.seq", "dna_modeller.seq", "native.decoys")
+# Example usage
+clean_and_combine("native.seq", "dna_modeller.seq", "native.decoys")
 
