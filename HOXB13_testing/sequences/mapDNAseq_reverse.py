@@ -3,7 +3,7 @@
 # Modified to handle special CG mapping rules with middle position exception
 #
 # Written by Xingcheng Lin, 12/12/2016;
-# Modified by Zhang Yafan, 12/05/2024;
+# Modified by Yafan Zhang, 12/05/2024;
 ###########################################################################
 
 import sys
