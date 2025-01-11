@@ -239,7 +239,7 @@ def plot_protDNA_phi_pairwise_contact_well(gammas, invert_sign=True, fix_colorba
     if save_path:
         # plt.savefig(os.path.join(save_path, f"{save_prefix}_gamma_plot.png"))
         matplotlib.rcParams['pdf.fonttype'] = 42
-        plt.savefig(os.path.join(save_path, f"{save_prefix}_gamma_plot.pdf"))
+        plt.savefig(os.path.join(save_path, f"{save_prefix}.pdf"))
     # plt.show()
     
 res_type_map_letters = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G',
@@ -323,12 +323,12 @@ def main():
         os.makedirs(save_path)
 
     individual_gammas_randomized_decoy = read_all_gammas("phi1_list.txt", "native_trainSetFiles.txt", training_decoy_method="CPLEX_randomization", noise_filtering=True)
-    plot_all_gammas_protDNA('phi1_list.txt', individual_gammas_randomized_decoy, vmin=-10, vmax=10, invert_sign=False, save_path=save_path, save_prefix="randomized_decoy")
+    plot_all_gammas_protDNA('phi1_list.txt', individual_gammas_randomized_decoy, vmin=-10, vmax=10, invert_sign=False, save_path=save_path, save_prefix="trained_gamma")
 
     original_phis_native=read_all_gammas("phi1_list.txt", "native_trainSetFiles.txt", training_decoy_method="CPLEX_randomization", noise_filtering=False, read_original_phis="native")
-    plot_all_gammas_protDNA('phi1_list.txt', original_phis_native, vmin=-3, vmax=3, invert_sign=False, save_path=save_path, save_prefix="native")
+    plot_all_gammas_protDNA('phi1_list.txt', original_phis_native, vmin=-3, vmax=3, invert_sign=False, save_path=save_path, save_prefix="native_phi")
 
     original_phis_decoy=read_all_gammas("phi1_list.txt", "native_trainSetFiles.txt", training_decoy_method="CPLEX_randomization", noise_filtering=False, read_original_phis="decoy")
-    plot_all_gammas_protDNA('phi1_list.txt', original_phis_decoy, vmin=-3, vmax=3, invert_sign=False, save_path=save_path, save_prefix="decoy")
+    plot_all_gammas_protDNA('phi1_list.txt', original_phis_decoy, vmin=-3, vmax=3, invert_sign=False, save_path=save_path, save_prefix="decoy_phi")
 if __name__ == "__main__":
     main()
