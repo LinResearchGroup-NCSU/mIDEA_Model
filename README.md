@@ -1,84 +1,113 @@
-# IDEA_Model
-Interpretable protein-DNA Energy Associative (IDEA) Model
+# IDEA Model: Interpretable Protein-DNA Energy Associative Model
 
-This is a cleaned-up version of the IDEA model. Training and testing data are provided, using 3 human MAX transcription factors (TFs) as an example. The final result here is used in Figure S1 in our IDEA manuscript.
+The **Interpretable Protein-DNA Energy Associative (IDEA) Model** is a computational framework that learns protein-DNA physicochemical interactions by fusing available crystal structures and their associated sequences into an optimized energy model. We show that the model can be used to accurately predict the sequence-specific DNA binding affinities of DNA-binding proteins and is transferable across the same protein superfamily. This repository provides a clean implementation of the IDEA model, with training and testing data for three human MAX transcription factors (PDB IDs: 1hlo, 1nlw, 1nkp). Results are used in **Figure S1** of the IDEA manuscript.
 
-## Max Protein Complexes Energy Model Training Guide
+## Features
 
-This guide will help you train an energy model for three human Max proteins (PDB IDs: 1hlo, 1nlw, and 1nkp).
+- Train and visualize IDEA energy models for protein-DNA complexes.
+- Generate phi values and calculate binding energies for testing binders.
+- Supplementary materials.
 
-### Step 1: Prepare Input Files
+## Installation
 
-1. **Protein List**:
-   Create a file named `3max_case/proteinList.txt` and list the PDB IDs of the proteins you want to train, one per line. For example:
-   ```
-   1hlo
-   1nlw
-   1nkp
-   ```
-
-2. **PDB Files**:
-   Place the PDB files in the directory `3max_case/PDBs`. Each PDB file should be named as `{PDB ID}_modified.pdb`. For example, `1hlo_modified.pdb`. Rename all protein chains in the PDB files to chain A, and the DNA chains to B and C. This ensures consistency across all files.
-
-### Step 2: Start the Training
-
-Open a terminal and run the following command to start the training process:
-```bash
-bash train.sh
-```
-
-### Step 3: Configuration Details
-
-1. **Choosing Interaction Atoms**:
-   Go to the file `3max_case/common_functions/common_function.py` and find the function `get_interaction_atom(residue)`. This function lets you choose which atoms to use for training. For this guide, we select C5 atoms from DNA and CA atoms from protein.
-
-2. **Setting the Cutoff Mode**:
-   Go to the file `3max_case/optimization/for_training_gamma/optimize_gamma.py`. This file contains a setting called `cutoff_mode`. The `cutoff_mode` helps filter out noise by keeping the first 70 eigenvalues and replacing the rest with the 70th eigenvalue. This helps improve the accuracy of the model.
-
-### Step 4: Understanding the Output
-
-After the training is complete, the results will be saved in the directory `3max_case/optimization/for_training_gamma/gammas/randomized_decoy`.
-
-Key output files include:
-- **Filtered Energy Model**: This file is named `native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered`. It contains the trained energy model after filtering.
-- **Other Important Files**: You will also find additional files such as `phi`, `A`, and `B` in the same folder. These files are part of the output from the training process.
-
-## Testing Protein-DNA Binders and Calculating Binding Energy
-
-Once you have the trained energy model, you may want to generate the `phi` for testing protein-DNA binders and calculate the associated binding energy. The `1hlo_phi255` directory provides an example of generating the `phi` for 255 testing binders corresponding to the Max Mitomi data reported in Maerkl and Quake (2007).
-
-### Step 1: Prepare Testing Input Files
-
-1. **PDB Files**:
-   Place the PDB files in the directory `1hlo_phi255/PDBs`.
-
-2. **DNA Sequence File**:
-   The DNA sequence file is `1hlo_phi255/sequences`.
-
-### Step 2: Generate Testing Sequences
-
-The input for this program starts from `dna_half.seq`. The scripts `reverse_complement.py` and `merge.py` help generate the full testing sequence. These steps are not necessary, but please ensure that your testing sequences are consistent with the DNA sequence in the native structure file (PDB).
-
-### Step 3: Generate the Testing Phi
-
-Run the following command to generate the testing `phi`:
-```bash
-bash 1hlo_phi255.sh
-```
-The generated testing `phi` will be in `1hlo_phi255/phis`, named `phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10`. It should have 255 lines as we have 255 testing sequences. The `phi_pairwise_contact_well_native_native_-8.0_8.0_0.7_10` file is the `phi` for the native structure (only one line as we have one structure as input).
-
-### Step 4: Calculate Predicted Energy
-
-Calculate the predicted energy based on the gamma file generated in `3max_case` and the testing `phi` file using the formula  E = γΦ.
-
-1. **Run the Python Script**:
-   Navigate to the `testing_energy` directory and run the script `calculate_testing_energy.py` to calculate the energy.
+- **Python 3**: Download from [python.org](https://www.python.org/downloads/).
+- **Conda** (Recommended: [Miniconda](https://docs.conda.io/en/latest/miniconda.html))
    ```bash
-   python calculate_testing_energy.py
+   wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   bash Miniconda3-latest-Linux-x86_64.sh
    ```
-   The generated energy will be in `Energy_mg.txt`. 
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/LinResearchGroup-NCSU/IDEA_Model
+   ```
+2. Create and Activate the Conda Environment:
+   ```bash
+   cd IDEA_Model
+   conda env create -f IDEA.yaml -n IDEA
+   conda activate IDEA
+   ```
+2. Ensure scripts are executable:
+   ```bash
+   chmod +x *.sh
+   ```
+  **Note**: Our old version used a single script `buildseq.py`, from the Modeller package to extract the protein and DNA sequences from the given PDB structure. To avoid further confusion and reduce the environment dependencies required to run the code, we rewrote it using basic Python code. The most time-consuming step of the IDEA is generating the phi values for decoy/testing binders. We rewrote the `template_evaluate_phi.py` by adopting parallel computation from joblib and multiprocessing, which is especially useful when we want to do genome-wide prediction. We also simplified the redundant parts of the code and added informative messages during model training and testing to make it more user-friendly.
+
+## Usage
+
+### Training the Energy Model
+
+Train an energy model for three MAX protein complexes (1hlo, 1nlw, 1nkp).
+
+1. **Prepare Input Files**:
+   - Create `training/proteinList.txt` with PDB IDs:
+     ```
+     1hlo
+     1nlw
+     1nkp
+     ```
+   - Place PDB files in `training/PDBs`, named `{PDB ID}_modified.pdb` (e.g., `1hlo_modified.pdb`). Rename protein chains to **A** and DNA chains to **B** and **C**, respectively.
+
+2. **Run Training**:
+   ```bash
+   bash train.sh
+   ```
+
+3. **Configure Settings**:
+   - **Interaction Atoms**: Edit `get_interaction_atom` in `common_function.py` to implement a **coarse-grained interaction scheme**, where DNA bases are represented by the **C5** atom (or **P** if backbone-level resolution is preferred), and protein residues are represented by the **Cα (CA)** atom, although **side-chain atoms** may also be used in cases where more detailed interactions are of interest.
+   - **Decoy Number**: In `training/optimization/for_bindingE/template/sequences`, the scripts generate_decoy_seq_prot.py and generate_decoy_seq_DNA.py are used to generate protein and DNA decoy sequences for training. The default sizes are 10,000 and 1,000, respectively, which we found to be robust across all tests in our manuscript. Please adjust these values based on your specific needs.
+   - **Cutoff Mode**: In `training/optimization/for_training_gamma/optimize_gamma.py`, set cutoff_mode = 70 to retain the first 70 eigenvalues, replacing all others with the 70th eigenvalue. This choice typically depends on the lambda values in `training/optimization/for_training_gamma/gammas/randomized_decoy/native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_lamb`.
+
+4. **Output**:
+   - Results are saved in `training/optimization/for_training_gamma/gammas/randomized_decoy`.
+   - Key file: `native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered` (filtered energy model).
+
+5. **Visualization**:
+   - Run:
+     ```bash
+     cd training/optimization/for_training_gamma/
+     python visualize.py
+     ```
+   - Plots are saved in `training/optimization/for_training_gamma/visualize`.
+
+### Predicting Protein-DNA Binding Energies
+
+Generate phi values and calculate binding energies for given testing binders (e.g., Max 255 mutated binders testing dataset in Maerkl, S. J et al.).
+
+1. **Prepare Input Files**:
+   - Place PDB files in `testing/PDBs`.
+   - DNA (testing) sequences are in `testing/sequences`.
+
+2. **Generate Testing Sequences**:
+   - Use `dna_half.seq` as input. Optionally, run `reverse_complement.py` and `merge.py` to generate full double-stranded DNA sequences.
+   - Ensure the length of sequences matches the native PDB structure.
+
+3. **Generate Testing Phi**:
+   ```bash
+   cd testing/
+   bash test.sh 1hlo
+   ```
+   - Output in `testing/phis`:
+     - `phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10` (255 lines for testing sequences).
+     - `phi_pairwise_contact_well_native_native_-8.0_8.0_0.7_10` (1 line for native structure).
+
+4. **Calculate Binding Energy**:
+   - Copy the files to `energy_calculation/`:
+     ```bash
+     cp training/optimization/for_training_gamma/gammas/randomized_decoy/native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered energy_calculation/
+     cp testing/phis/phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10 energy_calculation/
+     ```
+   
+   - Navigate to `energy_calculation` and run:
+     ```bash
+     python calculate_testing_energy.py
+     ```
+   - Output: `Energy_mg.txt` (predicted energies using **E = γΦ**).
 
 ## References
 
-Maerkl, S. J., & Quake, S. R. (2007). A Systems Approach to Measuring the Binding Energy Landscapes of Transcription Factors. *Science*, 315(5809), 233-237. DOI: [10.1126/science.1131007](https://doi.org/10.1126/science.1131007)
-```
+- Zhang, Y., Silvernail, I., Lin, Z., Lin, X. (2024). Interpretable Protein-DNA Interactions Captured by Structure-based Optimization. *bioRxiv*. [DOI:10.1101/2024.05.26.595895](https://www.biorxiv.org/content/10.1101/2024.05.26.595895v1)
+- Maerkl, S. J., & Quake, S. R. (2007). A Systems Approach to Measuring the Binding Energy Landscapes of Transcription Factors. *Science*, 315(5809), 233–237. [DOI:10.1126/science.1131007](https://doi.org/10.1126/science.1131007)
+
+## Contact
+
+For questions or support, contact the [Lin Research Group](https://github.com/LinResearchGroup-NCSU) or open an issue on GitHub.
