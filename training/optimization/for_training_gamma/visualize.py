@@ -88,7 +88,7 @@ def plot_all_gammas_protDNA(phi_list_file_name, individual_gammas, vmin=-0.3, vm
         if not i in gammas_to_plot:
             continue
         plot_phi = globals()['plot_protDNA_' + phi]
-        print(phi, parameters)
+        # print(phi, parameters)
         if plot_confidence:
             plot_phi(phi, parameters, individual_gammas[i], plot_confidence=plot_confidence,
                      confidence_lower=individual_confidence_lower[i], confidence_upper=individual_confidence_upper[i])
@@ -164,7 +164,7 @@ def plot_all_gammas(phi_list_file_name, individual_gammas, vmin=-0.3, vmax=0.3, 
         if not i in gammas_to_plot:
             continue
         plot_phi = globals()['plot_' + phi]
-        print(phi, parameters)
+        # print(phi, parameters)
         if plot_confidence:
             plot_phi(phi, parameters, individual_gammas[i], plot_confidence=plot_confidence,
                      confidence_lower=individual_confidence_lower[i], confidence_upper=individual_confidence_upper[i])
@@ -318,7 +318,7 @@ res_type_map_protDNA = {
 
 
 def main():
-    save_path = "./plots/"
+    save_path = "./visualize/"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -330,5 +330,6 @@ def main():
 
     original_phis_decoy=read_all_gammas("phi1_list.txt", "native_trainSetFiles.txt", training_decoy_method="CPLEX_randomization", noise_filtering=False, read_original_phis="decoy")
     plot_all_gammas_protDNA('phi1_list.txt', original_phis_decoy, vmin=-3, vmax=3, invert_sign=False, save_path=save_path, save_prefix="decoy_phi")
+    print("The visualized trained energy model is saved in the 'visualize' folder.")
 if __name__ == "__main__":
     main()

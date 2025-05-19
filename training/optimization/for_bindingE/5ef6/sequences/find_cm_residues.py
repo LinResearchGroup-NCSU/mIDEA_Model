@@ -1,110 +1,66 @@
-###########################################################################
-# This script will the residue and nucleotide IDs that are in contacts
-#
-# Written by Xingcheng Lin, 12/31/2022;
-###########################################################################
+#!/usr/bin/env python3
 
-import time
-import subprocess
-import os
-import math
+"""
+This script finds all protein–DNA residue contacts in a PDB file,
+and writes the contacting protein and DNA residue IDs (1-indexed) to two output files.
+
+Usage:
+    python find_cm_residues.py <pdb_file> <cutoff> <out_protein.txt> <out_dna.txt>
+
+Written by Xingcheng Lin, refactored by Yafan Zhang, 2025/05/07
+"""
+
 import sys
 import numpy as np
 import mdtraj as md
 import itertools
 
-################################################
+# Define DNA residue names to include (including 5CM = methylated cytosine)
+DNA_RESNAMES = {'DA', 'DG', 'DC', 'DT', '5CM'}
 
+def get_residue_indices(topology):
+    dna_res = [res.index for res in topology.residues if res.name in DNA_RESNAMES]
+    prot_res = [res.index for res in topology.residues if res.is_protein]
+    return dna_res, prot_res
 
-def my_lt_range(start, end, step):
-    while start < end:
-        yield start
-        start += step
+def find_contacts(pdbfile, cutoff):
+    traj = md.load_pdb(pdbfile)
+    dna_res, prot_res = get_residue_indices(traj.topology)
 
+    if not dna_res or not prot_res:
+        raise ValueError("No DNA or protein residues found.")
 
-def my_le_range(start, end, step):
-    while start <= end:
-        yield start
-        start += step
-#############################################
+    # Build all DNA–protein residue pairs
+    pairs = list(itertools.product(dna_res, prot_res))
+    
+    # Compute closest-heavy atom distances for each pair
+    distances, _ = md.compute_contacts(traj, contacts=pairs, scheme='closest-heavy')
+    distances = distances.flatten()
 
+    # Filter by cutoff
+    mask = distances < cutoff
+    contact_pairs = np.array(pairs)[mask]
 
-def find_cm_residues(pdbfile, cutoff, random_position_file_protein, random_position_file_DNA):
+    # Convert to 1-indexed and deduplicate
+    dna_ids = np.unique(contact_pairs[:, 0] + 1).astype(int)
+    prot_ids = np.unique(contact_pairs[:, 1] + 1).astype(int)
 
-    # Load the PDB
-    pdb = md.load_pdb(pdbfile)
-    # Convert into a pandas table
-    pdb_table, pdb_bonds = pdb.topology.to_dataframe()
+    return prot_ids, dna_ids
 
- #   print(pdb_table)
+def main():
+    if len(sys.argv) != 5:
+        print(__doc__)
+        sys.exit(1)
 
-    # Select residue indices belonging to DNA
-    DNA_resID = pdb_table.loc[(pdb_table['resName'] == 'DA') |  (pdb_table['resName'] == 'DC') | (pdb_table['resName'] == 'DT') | (pdb_table['resName'] == 'DG') | (pdb_table['resName'] == '5CM')].drop_duplicates(subset=['resSeq']).resSeq.to_numpy()
-    # Select residue indices belonging to protein
-    prot_resID = pdb_table.loc[(pdb_table['resName'] == 'ALA') |  (pdb_table['resName'] == 'ARG') | (pdb_table['resName'] == 'ASN') \
-         | (pdb_table['resName'] == 'ASP') | (pdb_table['resName'] == 'CYS') | (pdb_table['resName'] == 'GLU') \
-            | (pdb_table['resName'] == 'GLN') | (pdb_table['resName'] == 'GLY') | (pdb_table['resName'] == 'HIS') \
-                | (pdb_table['resName'] == 'ILE') | (pdb_table['resName'] == 'LEU') | (pdb_table['resName'] == 'LYS') \
-                    | (pdb_table['resName'] == 'MET') | (pdb_table['resName'] == 'PHE') | (pdb_table['resName'] == 'PRO') \
-                        | (pdb_table['resName'] == 'SER') | (pdb_table['resName'] == 'THR') | (pdb_table['resName'] == 'TRP') \
-                            | (pdb_table['resName'] == 'TYR') | (pdb_table['resName'] == 'VAL')].drop_duplicates(subset=['resSeq']).resSeq.to_numpy()
-    # For mdtraj requirement, made it into 0-indexed
-    DNA_resID_0_indexed = DNA_resID - 1
-    prot_resID_0_indexed = prot_resID - 1
+    pdbfile = sys.argv[1]
+    cutoff = float(sys.argv[2])
+    out_protein = sys.argv[3]
+    out_dna = sys.argv[4]
 
-    # Select the atom indices belong to DNA
-    # DNA_atom_indices = pdb.topology.select("(resname =~ 'DA' or resname =~ 'DT' or resname =~ 'DG' or resname =~ 'DC' or resname == '5CM')")
-    # Select the atom indices belong to protein
-    # prot_atom_indices = pdb.topology.select("is_protein == True")
+    prot_ids, dna_ids = find_contacts(pdbfile, cutoff)
 
-    # Use mdtraj to calculate the contacts
-    prot_DNA_respairs = list(itertools.product(DNA_resID_0_indexed, prot_resID_0_indexed))
- #   print(prot_DNA_respairs)
-    prot_DNA_respair_distances, residue_pairs = md.compute_contacts(pdb, prot_DNA_respairs, scheme='closest-heavy')
-
-    prot_DNA_respair_distances = prot_DNA_respair_distances.flatten()
-
-    combined_data = np.column_stack((residue_pairs, prot_DNA_respair_distances))
-
-
-    np.savetxt("combined_residue_pairs_distances.txt", combined_data, fmt='%d %d %.6f')
-
-
-
-    # Select those pairs that are closer than the cutoff
-    prot_DNA_respair_distances = prot_DNA_respair_distances.flatten()
-    cm_pair_idx = np.argwhere(prot_DNA_respair_distances < cutoff).flatten()
-
-    # Recover the 1-indexed protein and DNA residue IDs that are in contact
-    prot_cm_resID = []
-    DNA_cm_resID = []
-    for i in cm_pair_idx:
-        DNA_cm_resID = np.append(DNA_cm_resID, prot_DNA_respairs[i][0] + 1)
-        prot_cm_resID = np.append(prot_cm_resID, prot_DNA_respairs[i][1] + 1)
-
-    # Remove the duplicated residue IDs
-    prot_cm_resID = np.unique(prot_cm_resID).astype(int)
-    prot_cm_resID = np.reshape(prot_cm_resID, (1, np.shape(prot_cm_resID)[0]))
-    DNA_cm_resID = np.unique(DNA_cm_resID).astype(int)
-    DNA_cm_resID = np.reshape(DNA_cm_resID, (1, np.shape(DNA_cm_resID)[0]))
- #   print(prot_cm_resID)
- #   print(DNA_cm_resID)
-
-    np.savetxt(random_position_file_protein, prot_cm_resID, fmt='%d')
-    np.savetxt(random_position_file_DNA, DNA_cm_resID, fmt='%d')
-
-    return
-
-############################################################################
+    np.savetxt(out_protein, prot_ids[np.newaxis, :], fmt='%d')
+    np.savetxt(out_dna, dna_ids[np.newaxis, :], fmt='%d')
 
 if __name__ == "__main__":
-    pdbfile = sys.argv[1]
-    # Cutoff for determining residue contacts
-    cutoff = float(sys.argv[2])
-    # files for recording indicies
-    random_position_file_protein = sys.argv[3]
-    random_position_file_DNA = sys.argv[4]
-
-    find_cm_residues(pdbfile, cutoff, random_position_file_protein, random_position_file_DNA)
- 
-    print("I slept and dreamt that life was joy. I awoke and saw that life was service. I acted and behold, service was joy.")
+    main()

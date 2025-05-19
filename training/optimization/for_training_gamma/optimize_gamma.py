@@ -1,13 +1,3 @@
-####################################################################################
-# This script will optimize the energy model for gamma file
-#
-# Written by Xingcheng Lin, 06/10/2020
-####################################################################################
-
-import math
-import subprocess
-import os
-import time
 import sys
 
 import numpy as np
@@ -15,30 +5,6 @@ import numpy as np
 
 sys.path.append('../../common_functions')
 from common_function import *
-
-################################################
-
-
-def my_lt_range(start, end, step):
-    while start < end:
-        yield start
-        start += step
-
-
-def my_le_range(start, end, step):
-    while start <= end:
-        yield start
-        start += step
-
-
-def RepresentsFloat(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-###########################################
-
 
 def get_filtered_B_inv_lambda_and_P(filtered_lamb, cutoff_mode, P, method='extend_all_after_first_noisy_mode'):
     if method == 'zero_all_after_first_noisy_mode':
@@ -84,12 +50,13 @@ def get_filtered_gamma_B_lamb_P_and_lamb(A, B, half_B, other_half_B, std_half_B,
     cutoff_mode = min(cutoff_modes)
     # Hard set a cutoff_mode by looking at the Lamb file itself;
     cutoff_mode = 60
-
-    print(cutoff_modes)
-    print(cutoff_mode)
+    print(f"We retain the first {cutoff_mode} eigenvalues to filter gamma file.")
 
     filtered_lamb = np.copy(lamb)
-    print(filtered_lamb[cutoff_mode - 1])
+    print(
+    f"The last retained lambda after filtering "
+    f"(index {cutoff_mode - 1} in filtered_lamb): {filtered_lamb[cutoff_mode - 1]:.5f}")
+
     filtered_B_inv, filtered_lamb, P = get_filtered_B_inv_lambda_and_P(
         filtered_lamb, cutoff_mode, P)
 
@@ -126,106 +93,80 @@ def calculate_A_and_B_wei(average_phi_decoy, phi_native, all_phis):
 
     return A, B, half_B, other_half_B, std_half_B
 
-def calculate_A_B_and_gamma_xl23(training_set_file, phi_list_file_name, decoy_method, num_decoys, noise_filtering=True, jackhmmer=False):
+def calculate_A_B_and_gamma_xl23(
+    training_set_file,
+    phi_list_file_name,
+    decoy_method,
+    num_decoys,
+    noise_filtering=True,
+    jackhmmer=False,
+):
     phi_list = read_phi_list(phi_list_file_name)
     training_set = read_column_from_file(training_set_file, 1)
 
-    # Find out how many total phi_i there are and get full parameter string
     total_phis, full_parameters_string, num_phis = get_total_phis_and_parameter_string(
-        phi_list, training_set)
-    print("training set: " + str(training_set))
-    # print("total_phis: " + str(total_phis))
-    # print("num_phis: " + str(num_phis))
+        phi_list, training_set
+    )
+    print(f"training set: {training_set}")
 
     phi_native_i_protein = np.zeros((len(training_set), total_phis))
-    for i_protein, protein in enumerate(training_set):
-        phi_native_i_protein[i_protein] = read_native_phi(
-            protein, phi_list, total_phis, jackhmmer=jackhmmer)
+    for i, protein in enumerate(training_set):
+        phi_native_i_protein[i] = read_native_phi(
+            protein, phi_list, total_phis, jackhmmer=jackhmmer
+        )
 
     phi_native = np.average(phi_native_i_protein, axis=0)
 
-    # Output to a file;
-    file_prefix = "%s%s_%s" % (phis_directory, training_set_file.split(
-        '/')[-1].split('.')[0], full_parameters_string)
-    phi_summary_file_name = file_prefix + '_phi_native_summary.txt'
-    np.savetxt(phi_summary_file_name, phi_native, fmt='%1.5f')
+    file_prefix = f"{phis_directory}{training_set_file.split('/')[-1].split('.')[0]}_{full_parameters_string}"
+    np.savetxt(f"{file_prefix}_phi_native_summary.txt", phi_native, fmt="%1.5f")
 
-    phi_i_protein_i_decoy = np.zeros(
-        (len(training_set), num_decoys, total_phis))
+    phi_i_protein_i_decoy = np.zeros((len(training_set), num_decoys, total_phis))
+    for i, protein in enumerate(training_set):
+        phi_i_protein_i_decoy[i] = read_decoy_phis(
+            protein,
+            phi_list,
+            total_phis,
+            num_phis,
+            num_decoys,
+            decoy_method,
+            jackhmmer=jackhmmer,
+        )
 
-    for i_protein, protein in enumerate(training_set):
-        phi_i_protein_i_decoy[i_protein] = read_decoy_phis(
-            protein, phi_list, total_phis, num_phis, num_decoys, decoy_method, jackhmmer=jackhmmer)
-
-    # The phi_i decoy is constructed as the union of all decoys of all proteins in the training set;
-    phi_i_decoy = np.reshape(phi_i_protein_i_decoy,
-                             (len(training_set) * num_decoys, total_phis))
-
+    phi_i_decoy = phi_i_protein_i_decoy.reshape(
+        len(training_set) * num_decoys, total_phis
+    )
     average_phi_decoy = np.average(phi_i_decoy, axis=0)
+    np.savetxt(f"{file_prefix}_phi_decoy_summary.txt", average_phi_decoy, fmt="%1.5f")
 
-    # Output to a file;
-    file_prefix = "%s%s_%s" % (phis_directory, training_set_file.split(
-        '/')[-1].split('.')[0], full_parameters_string)
-    phi_summary_file_name = file_prefix + '_phi_decoy_summary.txt'
-    np.savetxt(phi_summary_file_name, average_phi_decoy, fmt='%1.5f')
-
-    #A, B, half_B, other_half_B, std_half_B = calculate_A_and_B(
-    #    average_phi_decoy, phi_native, total_phis, num_decoys, phi_i_decoy)
     A, B, half_B, other_half_B, std_half_B = calculate_A_and_B_wei(
-        average_phi_decoy, phi_native, phi_i_protein_i_decoy)
+        average_phi_decoy, phi_native, phi_i_protein_i_decoy
+    )
+    gamma = np.linalg.pinv(B) @ A
 
-    gamma = np.dot(np.linalg.pinv(B), A)
-
-    # write gamma file
-    file_prefix = "%s%s_%s" % (gammas_directory, training_set_file.split(
-        '/')[-1].split('.')[0], full_parameters_string)
-
-    gamma_file_name = file_prefix + '_gamma'
-#    gamma_file = open(gamma_file_name, 'w')
-    np.savetxt(gamma_file_name, gamma, '%1.5f')
-
-    A_file_name = file_prefix + '_A'
-#    A_file = open(A_file_name, 'w')
-    np.savetxt(A_file_name, A, fmt='%1.5f')
-
-    B_file_name = file_prefix + '_B'
-#    B_file = open(B_file_name, 'w')
-    np.savetxt(B_file_name, B, fmt='%1.5f')
-    #open("%s%s_%s_gamma.dat" % (gammas_directory, training_set_file.split('/')[-1].split('.')[0], full_parameters_string), 'w').write(str(gamma).strip('[]').replace('\n', ' '))
+    file_prefix = f"{gammas_directory}{training_set_file.split('/')[-1].split('.')[0]}_{full_parameters_string}"
+    np.savetxt(f"{file_prefix}_gamma", gamma, fmt="%1.5f")
+    np.savetxt(f"{file_prefix}_A", A, fmt="%1.5f")
+    np.savetxt(f"{file_prefix}_B", B, fmt="%1.5f")
 
     if noise_filtering:
-        filtered_gamma, filtered_B, filtered_lamb, P, lamb = get_filtered_gamma_B_lamb_P_and_lamb(
-            A, B, half_B, other_half_B, std_half_B, total_phis, num_decoys)
-        # gamma_file_name = "%sfiltered_%s_%s_gamma.dat" % (gammas_directory, training_set_file.split('/')[-1].split('.')[0], full_parameters_string)
-        # gamma_file = open(gamma_file_name, 'w')
-        filtered_gamma_file_name = file_prefix + '_gamma_filtered'
-#        filtered_gamma_file = open(filtered_gamma_file_name, 'w')
-        np.savetxt(filtered_gamma_file_name, filtered_gamma, fmt='%1.5f')
+        (
+            filtered_gamma,
+            filtered_B,
+            filtered_lamb,
+            P,
+            lamb,
+        ) = get_filtered_gamma_B_lamb_P_and_lamb(
+            A, B, half_B, other_half_B, std_half_B, total_phis, num_decoys
+        )
 
-        filtered_B_file_name = file_prefix + '_B_filtered'
-#        filtered_B_file = open(filtered_B_file_name, 'w')
-        np.savetxt(filtered_B_file_name, filtered_B, fmt='%1.5f')
-
-        filtered_lamb_file_name = file_prefix + '_lamb_filtered'
-#        filtered_lamb_file = open(filtered_lamb_file_name, 'w')
-        np.savetxt(filtered_lamb_file_name, filtered_lamb, fmt='%1.5f')
-
-        P_file_name = file_prefix + '_P'
-#        P_file = open(P_file_name, 'w')
-        np.savetxt(P_file_name, P, fmt='%1.5f')
-
-        lamb_file_name = file_prefix + '_lamb'
-#        lamb_file = open(lamb_file_name, 'w')
-        np.savetxt(lamb_file_name, lamb, fmt='%1.5f')
-
-        # open("%sfiltered_%s_%s_gamma.dat" % (gammas_directory, training_set_file.split('/')[-1].split('.')[0], full_parameters_string), 'w').write(str(filtered_gamma).strip('[]').replace('\n', ' '))
-
-    if noise_filtering:
+        np.savetxt(f"{file_prefix}_gamma_filtered", filtered_gamma, fmt="%1.5f")
+        np.savetxt(f"{file_prefix}_B_filtered", filtered_B, fmt="%1.5f")
+        np.savetxt(f"{file_prefix}_lamb_filtered", filtered_lamb, fmt="%1.5f")
+        np.savetxt(f"{file_prefix}_P", P, fmt="%1.5f")
+        np.savetxt(f"{file_prefix}_lamb", lamb, fmt="%1.5f")
         return
-        # return A, B, gamma, filtered_B, filtered_gamma, filtered_lamb, P, lamb
-    else:
-        return A, B, gamma
 
+    return A, B, gamma
 
 ############################################
 

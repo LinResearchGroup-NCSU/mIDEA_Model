@@ -50,7 +50,7 @@ def mapDNAseq_reverse(DNAseq_file, outputFile):
         outfile.write(converted_seq + "\n")
 
     outfile.close()
-    print("Mapping complete.")
+
     return
 
 ############################################################################
@@ -60,5 +60,7 @@ if __name__ == "__main__":
     outputFile = sys.argv[2]
 
     mapDNAseq_reverse(dnaSeq_file, outputFile)
-    print("When the voice of the Silent touches my words,")
-    print("I know him and therefore know myself.")
+    print("[INFO] Testing sequences mapping complete.")
+
+   # print("When the voice of the Silent touches my words,")
+   # print("I know him and therefore know myself.")

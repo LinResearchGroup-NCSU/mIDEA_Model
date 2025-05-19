@@ -18,7 +18,6 @@ def my_le_range(start, end, step):
 def create_tms(random_position_file, tot_resnum, PDBid):
 
     tms_directory = "./tms/"
-    pwd = os.getcwd()
 
     infile = open(random_position_file, 'r')
     lines = [line.strip() for line in infile]
@@ -48,9 +47,5 @@ if __name__ == "__main__":
     random_position_file = sys.argv[1]
     tot_resnum = int(sys.argv[2])
     PDBid = sys.argv[3]
-    print("tot_resnum: " + str(tot_resnum))
-
+    print(f"The total number of residues for {PDBid} is {tot_resnum}.")
     create_tms(random_position_file, tot_resnum, PDBid)
-    print("create_tms.py finished")
-    # print("When the voice of the Silent touches my words,")
-    # print("I know him and therefore know myself.")

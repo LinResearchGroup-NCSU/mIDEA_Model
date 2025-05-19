@@ -72,5 +72,5 @@ if __name__ == "__main__":
     outputFile = sys.argv[2]
 
     reverse_complement(dnaSeq_file, outputFile)
-    print("When the voice of the Silent touches my words,")
-    print("I know him and therefore know myself.")
+    # print("When the voice of the Silent touches my words,")
+    # print("I know him and therefore know myself.")

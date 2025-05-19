@@ -13,8 +13,6 @@ import random
 # For Biopython
 from Bio.PDB import *
 from Bio.PDB.Atom import Atom
-#from Bio.PDB.Polypeptide import protein_letters_1to3, protein_letters_3to1
-# For converting three-letter codes to one-letter codes
 from Bio.Data.IUPACData import protein_letters_3to1
 
 # For converting one-letter codes to three-letter codes
@@ -34,7 +32,6 @@ for three_letter, one_letter in protein_letters_3to1.items():
 
 phis_directory = "./phis/"
 tms_directory = "./tms/"
-#jackhmmer_phis_directory = "./jackhmmer_phis/"
 gammas_directory = "./gammas/"
 
 res_type_map = {
@@ -394,27 +391,6 @@ def sort_eigenvalues_and_eigenvectors(eigenvalues, eigenvectors):
     eigenvalues = eigenvalues[idx]
     eigenvectors = eigenvectors[:, idx]
     return eigenvalues, eigenvectors
-
-# These three functions provide a way of calling a function multiple times (that run independently)
-# on a certain number of processors so that a new function call starts when a processor becomes available
-
-
-def call_independent_functions_on_n_processors(function, arguments_lists, num_processors):
-    from multiprocessing import Pool
-    pool = Pool(int(num_processors))
-    results = pool.map(universal_worker, pool_args(function, *arguments_lists))
-
-
-def universal_worker(input_pair):
-    function, args = input_pair
-    return function(*args)
-
-
-def pool_args(function, *args):
-    return list(zip(itertools.repeat(function), list(zip(*args))))
-
-
-################################################################################################################
 
 def get_total_phis_and_parameter_string_decoy_structures_provided(phi_list, training_set):
     full_parameters_string = ""
