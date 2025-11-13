@@ -1,75 +1,154 @@
-# IDEA Model: Interpretable Protein-DNA Energy Associative Model
+# mIDEA: An Interpretable Structure–Sequence Model for Methylation-Dependent Protein–DNA Binding Sensitivity
 
-The **Interpretable Protein-DNA Energy Associative (IDEA) Model** is a computational framework that learns protein-DNA physicochemical interactions by fusing available crystal structures and their associated sequences into an optimized energy model. We show that the model can be used to accurately predict the sequence-specific DNA binding affinities of DNA-binding proteins and is transferable across the same protein superfamily. This repository provides a clean implementation of the IDEA model, with training and testing data for three human MAX transcription factors (PDB IDs: 1hlo, 1nlw, 1nkp). Results are used in **Figure S1** of the IDEA manuscript.
+mIDEA (Methylation-informed Interpretable protein–DNA Energy Associative model) is a structure-based, residue-level biophysical framework for predicting and interpreting methylation-dependent protein–DNA binding specificity. mIDEA extends a classical 20×4 amino acid–nucleotide interaction matrix by introducing **5-methylcytosine (5mC)** as a fifth nucleotide type, expanding the interaction matrix to **20×5**. This design enables explicit modeling of methylation effects on protein–DNA energetics.
+
+By integrating structural information from experimentally resolved or AI-predicted protein–DNA complexes with high-throughput methylation-dependent binding data, mIDEA provides both predictive accuracy and residue-level mechanistic insight.
+
+This repository demonstrates how to model the strong *methyl-minus* specificity of the MAX transcription factor using mIDEA.
 
 ## Features
 
-- Train and visualize IDEA energy models for protein-DNA complexes.
-- Generate phi values and calculate binding energies for testing binders.
-- Supplementary materials.
+- Train residue-level energy models based on structural templates
+- Predict binding free energies of unmethylated and methylated DNA sequences
+- Visualize γ-matrices and φ contact matrices
 
 ## Installation
 
-- **Python 3**: Download from [python.org](https://www.python.org/downloads/).
-- **Conda** (Recommended: [Miniconda](https://docs.conda.io/en/latest/miniconda.html))
-   ```bash
-   wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-   bash Miniconda3-latest-Linux-x86_64.sh
-   ```
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/LinResearchGroup-NCSU/IDEA_Model
-   ```
-2. Create and Activate the Conda Environment:
-   ```bash
-   cd IDEA_Model
-   conda env create -f IDEA.yaml -n IDEA
-   conda activate IDEA
-   ```
-2. Ensure scripts are executable:
-   ```bash
-   chmod +x *.sh
-   ```
-  **Note**: Our old version used a single script `buildseq.py`, from the Modeller package to extract the protein and DNA sequences from the given PDB structure. To avoid further confusion and reduce the environment dependencies required to run the code, we rewrote it using basic Python code. The most time-consuming step of the IDEA is generating the phi values for decoy/testing binders. We rewrote the `template_evaluate_phi.py` by adopting parallel computation from joblib and multiprocessing, which is especially useful when we want to do genome-wide prediction. We also simplified the redundant parts of the code and added informative messages during model training and testing to make it more user-friendly.
+### Requirements
+- Python 3
+- Conda (recommended)
+
+### Setup
+
+**1. Install Miniconda:**
+```bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
+
+**2. Clone the repository:**
+```bash
+git clone https://github.com/LinResearchGroup-NCSU/mIDEA_Model
+```
+
+**3. Create and activate the environment:**
+```bash
+cd mIDEA_Model
+conda env create -f mIDEA.yaml -n mIDEA
+conda activate mIDEA
+```
+
+**4. Make scripts executable:**
+```bash
+chmod +x *.sh
+```
 
 ## Usage
 
-### Training the Energy Model
+### 1. Training the Energy Model
 
-Train an energy model for three MAX protein complexes (1hlo, 1nlw, 1nkp).
+We train mIDEA using the MAX–DNA co-complex (PDB ID: 1HLO) as the structural template. To encode MAX's strong methyl-minus effect, the training set consists of a 10:1 ratio of unmethylated to methylated sequences:
 
-1. **Prepare Input Files**:
-   - Create `training/proteinList.txt` with PDB IDs:
-     ```
-     1hlo
-     1nlw
-     1nkp
-     ```
-   - Place PDB files in `training/PDBs`, named `{PDB ID}_modified.pdb` (e.g., `1hlo_modified.pdb`). Rename protein chains to **A** and DNA chains to **B** and **C**, respectively.
+- **Unmethylated**: 5'-CACCACGTGGT-3'
+- **Methylated**: 5'-CACCA(5mC)GTGGT-3'
 
-2. **Run Training**:
-   ```bash
-   bash train.sh
-   ```
+Both sequence types are threaded onto the structural template.
 
-3. **Configure Settings**:
-   - **Interaction Atoms**: Edit `get_interaction_atom` in `common_function.py` to implement a **coarse-grained interaction scheme**, where DNA bases are represented by the **C5** atom (or **P** if backbone-level resolution is preferred), and protein residues are represented by the **Cα (CA)** atom, although **side-chain atoms** may also be used in cases where more detailed interactions are of interest.
-   - **Decoy Number**: In `training/optimization/for_bindingE/template/sequences`, the scripts generate_decoy_seq_prot.py and generate_decoy_seq_DNA.py are used to generate protein and DNA decoy sequences for training. The default sizes are 10,000 and 1,000, respectively, which we found to be robust across all tests in our manuscript. Please adjust these values based on your specific needs.
-   - **Cutoff Mode**: In `training/optimization/for_training_gamma/optimize_gamma.py`, set cutoff_mode = 70 to retain the first 70 eigenvalues, replacing all others with the 70th eigenvalue. This choice typically depends on the lambda values in `training/optimization/for_training_gamma/gammas/randomized_decoy/native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_lamb`.
+### 2. Prepare Input Files
 
-4. **Output**:
-   - Results are saved in `training/optimization/for_training_gamma/gammas/randomized_decoy`.
-   - Key file: `native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered` (filtered energy model).
+**proteinList.txt**
+Create `training/proteinList.txt` containing:
+```
+1hloun00
+1hloun01
+1hloun02
+1hloun03
+1hloun04
+1hloun05
+1hloun06
+1hloun07
+1hloun08
+1hloun09
+1hlom00
+```
 
-5. **Visualization**:
-   - Run:
-     ```bash
-     cd training/optimization/for_training_gamma/
-     python visualize.py
-     ```
-   - Plots are saved in `training/optimization/for_training_gamma/visualize`.
+**PDB files**
+- Place files under: `training/PDBs/`
+- Naming: `{PDB ID}_modified.pdb`
+- Chain names:
+  - Protein → A
+  - DNA → B and C
 
-### Predicting Protein-DNA Binding Energies
+### 3. Run Training
+```bash
+bash train.sh
+```
+
+### 4. Configuration Options
+
+**Interaction Atoms**
+Edit `get_interaction_atom` in `common_function.py` to define coarse-grained interaction atoms.
+
+*Manuscript defaults:*
+- Protein residues → Cα (CA)
+- DNA → phosphate (P)
+
+**Decoy Generation**
+Decoys are generated in:
+```bash
+training/optimization/for_bindingE/template/sequences/
+```
+
+*Defaults:*
+- Protein decoys → 10,000
+- DNA decoys → 1,000
+
+**Eigenvalue Cutoff**
+In:
+```bash
+training/optimization/for_training_gamma/optimize_gamma.py
+```
+
+Set:
+```python
+cutoff_mode = 60
+```
+Retains the largest 60 eigenvalues for γ-regularization.
+
+### 5. Output
+
+Training results are stored in:
+```
+training/optimization/for_training_gamma/gammas/randomized_decoy/
+```
+
+**Key file** (final γ energy matrix):
+```
+native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered
+```
+
+### 6. Visualization
+
+Generate model figures with:
+```bash
+cd training/optimization/for_training_gamma/
+python visualize.py
+```
+
+Outputs are saved in:
+```
+training/optimization/for_training_gamma/visualize/
+```
+
+**Includes:**
+- γ interaction matrix
+- native φ contact matrix  
+- averaged decoy φ matrix
+```
+
+Below need to be changed:
+
+### Predicting Protein-DNA Binding Free Energies 
 
 Generate phi values and calculate binding energies for given testing binders (e.g., Max 255 mutated binders testing dataset in Maerkl, S. J et al.).
 
@@ -103,11 +182,17 @@ Generate phi values and calculate binding energies for given testing binders (e.
      ```
    - Output: `Energy_mg.txt` (predicted energies using **E = γΦ**).
 
+## Supplementary Materials
+
+- **Trained Energy Models**: [IDEA_trained_energy_models](https://github.com/LinResearchGroup-NCSU/IDEA_Model/tree/main/supplementary_materials/IDEA_trained_energy_models)
+- **Raw Data**: [raw_data.zip](https://github.com/LinResearchGroup-NCSU/IDEA_Model/blob/main/supplementary_materials/raw_data.zip)
+- **Processed Published Models**: Scripts for comparing with DBD-hunter and rCLAMPS: [other_published_models](https://github.com/LinResearchGroup-NCSU/IDEA_Model/tree/main/supplementary_materials/other_published_models)
+
 ## References
 
-- Zhang, Y., Silvernail, I., Lin, Z., Lin, X. (2024). Interpretable Protein-DNA Interactions Captured by Structure-based Optimization. *bioRxiv*. [DOI:10.1101/2024.05.26.595895](https://www.biorxiv.org/content/10.1101/2024.05.26.595895v1)
+- Zhang, Y., Silvernail, I., Lin, Z., & Lin, X. (2025). Interpretable Protein–DNA Interactions Captured by Structure–Sequence Optimization. eLife, 14, e105565. https://doi.org/10.7554/eLife.105565
 - Maerkl, S. J., & Quake, S. R. (2007). A Systems Approach to Measuring the Binding Energy Landscapes of Transcription Factors. *Science*, 315(5809), 233–237. [DOI:10.1126/science.1131007](https://doi.org/10.1126/science.1131007)
 
 ## Contact
 
-For questions or support, contact the [Lin Research Group](https://github.com/LinResearchGroup-NCSU) or open an issue on GitHub.
+For questions or support, contact the [Lin Research Group](https://lingroup.wordpress.ncsu.edu/) or open an issue on GitHub.
