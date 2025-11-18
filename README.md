@@ -1,26 +1,45 @@
 # mIDEA: An Interpretable Structure–Sequence Model for Methylation-Dependent Protein–DNA Binding Sensitivity
 
-mIDEA (Methylation-informed Interpretable protein–DNA Energy Associative model) is a structure-based, residue-level biophysical framework for predicting and interpreting methylation-dependent protein–DNA binding specificity. mIDEA extends a classical 20×4 amino acid–nucleotide interaction matrix by introducing **5-methylcytosine (5mC)** as a fifth nucleotide type, expanding the interaction matrix to **20×5**. This design enables explicit modeling of methylation effects on protein–DNA energetics.
+**mIDEA** (Methylation-informed Interpretable protein–DNA Energy Associative model) is a structure-based, residue-level biophysical framework for predicting and interpreting methylation-dependent protein–DNA binding specificity. mIDEA extends a classical 20×4 amino acid–nucleotide interaction matrix by introducing **5-methylcytosine (5mC)** as the fifth nucleotide, expanding the matrix to **20×5**. This enables explicit modeling of methylation effects on protein–DNA interactions.
 
-By integrating structural information from experimentally resolved or AI-predicted protein–DNA complexes with high-throughput methylation-dependent binding data, mIDEA provides both predictive accuracy and residue-level mechanistic insight.
+By integrating structural information from experimentally resolved or AI-predicted protein–DNA complexes with high-throughput methylation-dependent binding data, mIDEA provides both predictive accuracy and residue-level mechanistic insight. The model is trained using **two complementary strategies**:
 
-This repository demonstrates how to model the strong *methyl-minus* specificity of the MAX transcription factor using mIDEA.
+**(i) Structure-informed optimization strategy**  
+Combines structural templates, synthetic sequence decoys, and prior knowledge of how cytosine methylation modulates protein–DNA interactions to construct a sparse yet comprehensive training dataset. This allows the model to capture methylation effects even in the absence of quantitative measurements.
 
-## Features
+**(ii) Fully data-driven strategy**  
+Directly fits the residue–nucleotide interaction matrix γ(a, n) using quantitative protein–methylated DNA binding data. Experimental signals are mapped onto geometric features of the protein–DNA interface to yield a more direct representation of methylation-dependent interaction patterns.
 
-- Train residue-level energy models based on structural templates
-- Predict binding free energies of unmethylated and methylated DNA sequences
-- Visualize γ-matrices and φ contact matrices
+This repository demonstrates the modeling of the strong *methyl-minus* specificity of the MAX transcription factor using **strategy (i)**, the primary optimization approach in mIDEA.  
+Comprehensive manuscript-related resources—including both training and testing datasets, the full implementation of strategy (ii), and all visualization scripts—are available in the `RAW/` directory.
+
+---
+
+## Model Capabilities
+
+- Train residue-level energy models using structural templates and synthetic sequence decoys  
+- Predict binding free energies for unmethylated and methylated DNA sequences  
+- Visualize γ interaction matrices and φ (residue–nucleotide contact) matrices  
+
+---
+
+## Repository Contents
+
+- Implementation of both optimization strategies **(i)** and **(ii)**  
+- Complete training and testing datasets  
+- All visualization and analysis scripts (including those used in the manuscript figures)  
+
+---
 
 ## Installation
 
 ### Requirements
-- Python 3
+- Python 3  
 - Conda (recommended)
 
 ### Setup
 
-**1. Install Miniconda:**
+#### 1. Install Miniconda
 ```bash
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
@@ -45,20 +64,23 @@ chmod +x *.sh
 
 ## Usage
 
-### 1. Training the Energy Model
+### 1. Training the Energy Model γ
 
 We train mIDEA using the MAX–DNA co-complex (PDB ID: 1HLO) as the structural template. To encode MAX's strong methyl-minus effect, the training set consists of a 10:1 ratio of unmethylated to methylated sequences:
 
-- **Unmethylated**: 5'-CACCACGTGGT-3'
-- **Methylated**: 5'-CACCA(5mC)GTGGT-3'
+- **Unmethylated:** `5'-CACCACGTGGT-3'`
+- **Methylated:** `5'-CACCA(5mC)GTGGT-3'`
 
-Both sequence types are threaded onto the structural template.
+Both sequence types are threaded onto the structural template to construct the final training structures.
+
+---
 
 ### 2. Prepare Input Files
 
-**proteinList.txt**
+**`proteinList.txt`**
+
 Create `training/proteinList.txt` containing:
-```
+```text
 1hloun00
 1hloun01
 1hloun02
@@ -73,21 +95,22 @@ Create `training/proteinList.txt` containing:
 ```
 
 **PDB files**
-- Place files under: `training/PDBs/`
-- Naming: `{PDB ID}_modified.pdb`
-- Chain names:
-  - Protein → A
-  - DNA → B and C
+- Place files under: `training/PDBs/`  
+- Naming format: `{PDB ID}_modified.pdb`  
+- Chain names:  
+  - Protein → `A`  
+  - DNA → `B` and `C`
 
 ### 3. Run Training
 ```bash
+cd training
 bash train.sh
 ```
 
 ### 4. Configuration Options
 
 **Interaction Atoms**
-Edit `get_interaction_atom` in `common_function.py` to define coarse-grained interaction atoms.
+Edit `get_interaction_atom` in `common_functions/common_function.py` to define coarse-grained interaction atoms.
 
 *Manuscript defaults:*
 - Protein residues → Cα (CA)
@@ -106,14 +129,14 @@ training/optimization/for_bindingE/template/sequences/
 **Eigenvalue Cutoff**
 In:
 ```bash
-training/optimization/for_training_gamma/optimize_gamma.py
+optimization/for_training_gamma/optimize_gamma.py
 ```
 
 Set:
 ```python
 cutoff_mode = 60
 ```
-Retains the largest 60 eigenvalues for γ-regularization.
+Retains the largest 60 eigenvalues.
 
 ### 5. Output
 
@@ -122,76 +145,75 @@ Training results are stored in:
 training/optimization/for_training_gamma/gammas/randomized_decoy/
 ```
 
-**Key file** (final γ energy matrix):
+**Key file** (final filtered γ energy matrix):
 ```
 native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered
 ```
 
 ### 6. Visualization
 
-Generate model figures with:
+Visualize the trained energy model with:
 ```bash
 cd training/optimization/for_training_gamma/
 python visualize.py
 ```
 
-Outputs are saved in:
+Figures are saved in:
 ```
 training/optimization/for_training_gamma/visualize/
 ```
 
 **Includes:**
-- γ interaction matrix
+- optimized γ interaction matrix  
 - native φ contact matrix  
 - averaged decoy φ matrix
-```
 
-Below need to be changed:
+### 7. Predicting Protein–DNA Binding Free Energies
 
-### Predicting Protein-DNA Binding Free Energies 
+We first generate testing φ matrices for both the methylated and unmethylated versions of the testing sequences.
 
-Generate phi values and calculate binding energies for given testing binders (e.g., Max 255 mutated binders testing dataset in Maerkl, S. J et al.).
+1. **Prepare Input Files**
+   - Place PDB files in `testing/PDBs/`
+   - DNA testing sequences are in `testing/sequences/`
+   - Use `dna_half.seq` as input  
+     Optionally, run:
+     ```bash
+     python reverse_complement.py
+     python merge.py
+     ```
+     to generate full double-stranded DNA sequences
+   - Ensure the sequence length matches the native PDB structure
 
-1. **Prepare Input Files**:
-   - Place PDB files in `testing/PDBs`.
-   - DNA (testing) sequences are in `testing/sequences`.
+2. **Treat CpG as methylated**  
+   In `testing/mapDNAseq_reverse.py`, set:
+   ```python
+   handle_CG = True
 
-2. **Generate Testing Sequences**:
-   - Use `dna_half.seq` as input. Optionally, run `reverse_complement.py` and `merge.py` to generate full double-stranded DNA sequences.
-   - Ensure the length of sequences matches the native PDB structure.
 
-3. **Generate Testing Phi**:
+3. **Generate Testing φ**:
    ```bash
    cd testing/
    bash test.sh 1hlo
    ```
    - Output in `testing/phis`:
-     - `phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10` (255 lines for testing sequences).
-     - `phi_pairwise_contact_well_native_native_-8.0_8.0_0.7_10` (1 line for native structure).
+     - `phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10` (φ for testing sequences).
 
-4. **Calculate Binding Energy**:
-   - Copy the files to `energy_calculation/`:
-     ```bash
-     cp training/optimization/for_training_gamma/gammas/randomized_decoy/native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered energy_calculation/
-     cp testing/phis/phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10 energy_calculation/
-     ```
-   
-   - Navigate to `energy_calculation` and run:
-     ```bash
-     python calculate_testing_energy.py
-     ```
-   - Output: `Energy_mg.txt` (predicted energies using **E = γΦ**).
+4. **Calculate binding energy**
+- Copy and rename the generated γ and φ files into `testing/phis/`
+- Then compute the predicted energies using:
+  ```bash
+  python calculate_predicted_energy.py # using E = γφ (remember to update the file name in the script)
+  ```
 
 ## Supplementary Materials
-
-- **Trained Energy Models**: [IDEA_trained_energy_models](https://github.com/LinResearchGroup-NCSU/IDEA_Model/tree/main/supplementary_materials/IDEA_trained_energy_models)
-- **Raw Data**: [raw_data.zip](https://github.com/LinResearchGroup-NCSU/IDEA_Model/blob/main/supplementary_materials/raw_data.zip)
-- **Processed Published Models**: Scripts for comparing with DBD-hunter and rCLAMPS: [other_published_models](https://github.com/LinResearchGroup-NCSU/IDEA_Model/tree/main/supplementary_materials/other_published_models)
+- **Implementation of strategy (ii):** `RAW/Strategy2/`
+- **Raw data and visualization code:** `RAW/Data/`
 
 ## References
 
-- Zhang, Y., Silvernail, I., Lin, Z., & Lin, X. (2025). Interpretable Protein–DNA Interactions Captured by Structure–Sequence Optimization. eLife, 14, e105565. https://doi.org/10.7554/eLife.105565
-- Maerkl, S. J., & Quake, S. R. (2007). A Systems Approach to Measuring the Binding Energy Landscapes of Transcription Factors. *Science*, 315(5809), 233–237. [DOI:10.1126/science.1131007](https://doi.org/10.1126/science.1131007)
+Yafan Zhang, Rina Li, Junhao Zhong, and Xingcheng Lin.  
+“mIDEA: An Interpretable Structure–Sequence Model for Methylation-Dependent Protein–DNA Binding Sensitivity”.  
+*bioRxiv* (2025). DOI: https://doi.org/10.1101/2025.11.14.688575
 
 ## Contact
 
