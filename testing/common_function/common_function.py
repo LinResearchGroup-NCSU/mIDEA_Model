@@ -251,9 +251,9 @@ def get_interaction_atom(residue):
         if (residue.resname.strip() == "DA") or (residue.resname.strip() == "DT") or (residue.resname.strip() == "DC") or (residue.resname.strip() == "DG") or (residue.resname.strip() == "5CM"):
            # print(residue)
             try:
-                residue["C5"]
+                residue["P"]
                # print(residue["P"])
-                return residue["C5"]
+                return residue["P"]
             except KeyError:
                 try: 
                     residue["O5'"]

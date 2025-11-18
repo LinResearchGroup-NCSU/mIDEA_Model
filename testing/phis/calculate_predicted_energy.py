@@ -35,13 +35,13 @@ def save_energy(e_decoy, filename):
     np.savetxt(filename, e_decoy, fmt='%f', delimiter='\n')
 
 def main():
-    gamma_file_name = 'native_trainSetFiles_phi_pairwise_contact_well-8.0_8.0_0.7_10_gamma_filtered'  
-    phi_file_name = 'phi_pairwise_contact_well_native_decoys_CPLEX_randomization_-8.0_8.0_0.7_10'
+    gamma_file_name = 'gamma_10un1m'  
+    phi_file_name = 'phi_10un1m_m'
 
     gamma = load_gamma(gamma_file_name)
     phi_i_decoy = load_phi(phi_file_name)
     e_decoy = calculate_energy(gamma, phi_i_decoy)
-    save_energy(e_decoy, 'Energy_mg.txt')
+    save_energy(e_decoy, 'Energy_mg_10un1m_m.txt')
 
 if __name__ == "__main__":
     main()

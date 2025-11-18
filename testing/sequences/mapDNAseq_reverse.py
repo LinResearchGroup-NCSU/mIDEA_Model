@@ -6,11 +6,13 @@
 # Modified by Yafan Zhang, 12/05/2024;
 ###########################################################################
 
+# Set this to True if you want to apply the C in CG to "." rule, or False to skip it
+handle_CG = True
+
 import sys
 
 def mapDNAseq_reverse(DNAseq_file, outputFile):
-
-    # Dictionary between Real DNA sequence to Modeller representation;
+    # Dictionary between real DNA bases and Modeller representation
     Real_to_Modeller = {
         "A": "e",
         "G": "l",
@@ -36,21 +38,23 @@ def mapDNAseq_reverse(DNAseq_file, outputFile):
         else:
             middle_positions = [seq_length // 2]
 
-        for idx in range(len(seq)):
-            if seq[idx] == "C" and idx + 1 < len(seq) and seq[idx + 1] == "G":
-                # Check if idx is not in middle positions
+        for idx in range(seq_length):
+            base = seq[idx]
+            # If CG-handling is enabled and we see a "C" followed by "G"
+            if handle_CG and base == "C" and idx + 1 < seq_length and seq[idx + 1] == "G":
+                # If this "C" is not at a middle position, map to "."
                 if idx not in middle_positions:
-                    real_seq.append(".")  # Map "C" to "." if followed by "G" and not in middle
-                else:
-                    real_seq.append(Real_to_Modeller.get(seq[idx], seq[idx]))  # Normal mapping
-            else:
-                real_seq.append(Real_to_Modeller.get(seq[idx], seq[idx]))  # Normal mapping
+                    real_seq.append(".")
+                    continue
+                # Otherwise (it is in the middle), fall through to normal mapping
 
-        converted_seq = ''.join(real_seq)
+            # Normal mapping for all other cases (or if handle_CG is False)
+            real_seq.append(Real_to_Modeller.get(base, base))
+
+        converted_seq = "".join(real_seq)
         outfile.write(converted_seq + "\n")
 
     outfile.close()
-
     return
 
 ############################################################################
@@ -60,7 +64,7 @@ if __name__ == "__main__":
     outputFile = sys.argv[2]
 
     mapDNAseq_reverse(dnaSeq_file, outputFile)
-    print("[INFO] Testing sequences mapping complete.")
+    print("[INFO] Testing sequences mapping complete. CG handling =", handle_CG)
 
    # print("When the voice of the Silent touches my words,")
    # print("I know him and therefore know myself.")
