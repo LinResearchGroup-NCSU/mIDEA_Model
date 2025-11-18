@@ -11,7 +11,7 @@ Combines structural templates, synthetic sequence decoys, and prior knowledge of
 Directly fits the residue–nucleotide interaction matrix γ(a, n) using quantitative protein–methylated DNA binding data. Experimental signals are mapped onto geometric features of the protein–DNA interface to yield a more direct representation of methylation-dependent interaction patterns.
 
 This repository demonstrates the modeling of the strong *methyl-minus* specificity of the MAX transcription factor using **strategy (i)**, the primary optimization approach in mIDEA.  
-Comprehensive manuscript-related resources—including both training and testing datasets, the full implementation of strategy (ii), and all visualization scripts—are available in the `RAW/` directory.
+Note. Essential resources (implementation of strategy (ii), representative results, and visualization scripts) are provided in the RAW/ archive. Owing to GitHub’s file size restrictions, some intermediate data and auxiliary code are not included but can be made available upon request.
 
 ---
 
@@ -26,8 +26,8 @@ Comprehensive manuscript-related resources—including both training and testing
 ## Repository Contents
 
 - Implementation of both optimization strategies **(i)** and **(ii)**  
-- Complete training and testing datasets  
-- All visualization and analysis scripts (including those used in the manuscript figures)  
+- Key raw data and figures   
+- Visualization scripts  
 
 ---
 
@@ -207,8 +207,8 @@ We first generate testing φ matrices for both the methylated and unmethylated v
 
 ## Supplementary Materials
 - **Implementation of strategy (ii):** `RAW/Strategy2/`
-- **Raw data and visualization code:** `RAW/Data/`
-- **Raw figures:** `RAW/Figures/`
+- **Key results and visualization code:** `RAW/Data/`
+- **Raw figures (editable):** `RAW/Figures/`
 
 ## References
 
