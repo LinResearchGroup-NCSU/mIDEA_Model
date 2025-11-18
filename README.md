@@ -208,6 +208,7 @@ We first generate testing φ matrices for both the methylated and unmethylated v
 ## Supplementary Materials
 - **Implementation of strategy (ii):** `RAW/Strategy2/`
 - **Raw data and visualization code:** `RAW/Data/`
+- **Raw figures:** `RAW/Figures/`
 
 ## References
 
